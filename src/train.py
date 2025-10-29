@@ -1,7 +1,9 @@
 import pickle
 import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping
-from models import build_lstm_model
+from models import build_cnn_bilstm_model  # Updated import
 
 # ===============================
 # Load preprocessed data
@@ -23,7 +25,7 @@ input_shape = (X_train.shape[1], X_train.shape[2])
 # ===============================
 # Build and train model
 # ===============================
-model = build_lstm_model(input_shape, num_classes)
+model = build_cnn_bilstm_model(input_shape, num_classes)  # Use new model builder
 model.summary()
 
 checkpoint = ModelCheckpoint(
@@ -48,7 +50,21 @@ history = model.fit(
 )
 
 # ===============================
-# Evaluate
+# Evaluate on test data
 # ===============================
 test_loss, test_acc = model.evaluate(X_test, y_test)
 print(f"Test Accuracy: {test_acc*100:.2f}%")
+
+# ===============================
+# Generate and plot confusion matrix
+# ===============================
+y_pred_prob = model.predict(X_test)
+y_pred = np.argmax(y_pred_prob, axis=1)
+
+cm = confusion_matrix(y_test, y_pred)
+cm_norm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+
+disp = ConfusionMatrixDisplay(confusion_matrix=cm_norm)
+disp.plot(cmap=plt.cm.Blues)
+plt.title("Normalized Confusion Matrix")
+plt.show()
